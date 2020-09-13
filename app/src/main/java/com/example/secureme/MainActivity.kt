@@ -2,10 +2,12 @@ package com.example.secureme
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
+import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebViewClient
@@ -13,11 +15,14 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 
+
 @SuppressLint("SetJavaScriptEnabled")
 class MainActivity : AppCompatActivity() {
+
     companion object {
         const val TAG = "SecureMe"
         const val MY_CAMERA_REQUEST_CODE = 100
+        const val JAVASCRIPT_OBJ = "JSBridge"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,7 +80,33 @@ class MainActivity : AppCompatActivity() {
                     return Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
                 }
             }
-            loadUrl("https://secure-me.au10tixservicesdev.com?token=l5vYUMiidfpqsx&api=aHR0cHM6Ly93ZXUtY20tYXBpbS1kZXYuYXp1cmUtYXBpLm5ldC9zZWN1cmUtbWUvdjE%3D")
+            addJavascriptInterface(JSBridge(object : BridgeCallback {
+                override fun onWebEvent(event: SessionEvent?, fromWeb: String?) {
+                    if (event?.eventType == SessionEvent.EventType.SUCCESS) {
+                        val mIntent = Intent(this@MainActivity, EndActivity::class.java)
+                        val mBundle = Bundle()
+                        mBundle.putParcelable("EVENT", event)
+                        mIntent.putExtras(mBundle)
+                        startActivity(mIntent)
+                    }
+                }
+            }), JAVASCRIPT_OBJ)
+            loadUrl("https://secure-me.au10tixservicesdev.com?token=b1IHT7SkAYnrTN&api=aHR0cHM6Ly93ZXUtY20tYXBpbS1kZXYuYXp1cmUtYXBpLm5ldC9zZWN1cmUtbWUvdjE%3D")
         }
     }
+
+    class JSBridge internal constructor(var bridgeCallback: BridgeCallback) {
+
+        @JavascriptInterface
+        fun webToMobileData(event: String?, url: String?) {
+            Log.d(TAG, event)
+            val sessionEvent = SessionEvent.createSessionEvent(event)
+            bridgeCallback.onWebEvent(sessionEvent, url)
+        }
+    }
+
+    interface BridgeCallback {
+        fun onWebEvent(event: SessionEvent?, fromWeb: String?)
+    }
 }
+
