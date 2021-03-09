@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.webkit.PermissionRequest
@@ -24,14 +25,13 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M && checkSelfPermission(
                 Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             requestPermissions(arrayOf(Manifest.permission.CAMERA), MY_CAMERA_REQUEST_CODE)
         } else {
-            setupWebView()
+            setupWebView(intent?.data)
         }
     }
 
@@ -44,14 +44,14 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == MY_CAMERA_REQUEST_CODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "camera permission granted", Toast.LENGTH_LONG).show()
-                setupWebView()
+                setupWebView(intent?.data)
             } else {
                 Toast.makeText(this, "camera permission denied", Toast.LENGTH_LONG).show()
             }
         }
     }
 
-    private fun setupWebView() {
+    private fun setupWebView(data: Uri?) {
         webview.apply {
             settings.javaScriptEnabled = true
             settings.javaScriptCanOpenWindowsAutomatically = true
@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
                     return Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
                 }
             }
-            loadUrl("https://secure-me.au10tixservicesqa.com")
+            loadUrl(data.toString())
         }
     }
 }
