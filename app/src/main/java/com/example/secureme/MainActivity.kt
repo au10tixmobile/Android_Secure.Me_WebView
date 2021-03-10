@@ -62,13 +62,13 @@ class MainActivity : AppCompatActivity() {
                     Log.d(TAG, "onPermissionRequest")
                     runOnUiThread {
                         Log.d(TAG, request.origin.toString())
-                        if (request.origin.toString() == "https://secure-me") {
+//                        if (request.origin.toString() == "https://secure-me") {
                             Log.d(TAG, "GRANTED")
                             request.grant(request.resources)
-                        } else {
-                            Log.d(TAG, "DENIED")
-                            request.deny()
-                        }
+//                        } else {
+//                            Log.d(TAG, "DENIED")
+//                            request.deny()
+//                        }
                     }
                 }
 
