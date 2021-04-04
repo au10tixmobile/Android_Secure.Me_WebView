@@ -2,11 +2,8 @@ package com.example.secureme
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.ContentValues
-import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
-import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
@@ -25,16 +22,43 @@ class MainActivity : AppCompatActivity() {
         const val MY_CAMERA_REQUEST_CODE = 100
     }
 
+    private var fileUriCallback: ValueCallback<Array<Uri>>? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M && checkSelfPermission(
                 Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            requestPermissions(arrayOf(Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION), MY_CAMERA_REQUEST_CODE)
+            requestPermissions(
+                arrayOf(
+                    Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ), MY_CAMERA_REQUEST_CODE
+            )
         } else {
             setupWebView(intent?.data)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+        super.onActivityResult(requestCode, resultCode, intent)
+        Log.d(TAG, "onActivityResult")
+        when (requestCode) {
+            ActivityMain.REQUEST_CODE_GALLERY -> fileUriCallback = if (resultCode == RESULT_OK) {
+                val selectedImageUri = intent!!.data!!
+                val localIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, selectedImageUri)
+                this.sendBroadcast(localIntent)
+                // If we want to downsize check out the post
+                //  http://stackoverflow.com/questions/2507898/how-to-pick-an-image-from-gallery-sd-card-for-my-app
+                fileUriCallback!!.onReceiveValue(arrayOf(selectedImageUri))
+                null
+            } else {
+                fileUriCallback?.onReceiveValue(arrayOf())
+                null
+            }
         }
     }
 
@@ -57,18 +81,11 @@ class MainActivity : AppCompatActivity() {
     private fun setupWebView(data: Uri?) {
         WebView.setWebContentsDebuggingEnabled(true)
         webview.apply {
-            addJavascriptInterface(
-                LocalStorageJavaScriptInterface(applicationContext),
-                "LocalStorage"
-            )
             settings.javaScriptEnabled = true
             settings.javaScriptCanOpenWindowsAutomatically = true
             settings.mediaPlaybackRequiresUserGesture = false
-            //Enable and setup JS localStorage
-            settings.domStorageEnabled = true
             //those two lines seem necessary to keep data that were stored even if the app was killed.
-            settings.databaseEnabled = true
-            settings.databasePath = filesDir.parentFile.path + "/databases/"
+            addJavascriptInterface(JsObject(), "JsObject")
             webViewClient = WebViewClient()
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest) {
@@ -85,6 +102,17 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
+                override fun onShowFileChooser(
+                    webView: WebView?,
+                    filePathCallback: ValueCallback<Array<Uri>>?,
+                    fileChooserParams: FileChooserParams?
+                ): Boolean {
+                    Log.d(TAG, "onShowFileChooser")
+                    this@MainActivity.fileUriCallback = filePathCallback
+                    showGallery()
+                    return true
+                }
+
                 //Hides the default camera poster
                 override fun getDefaultVideoPoster(): Bitmap? {
                     return Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
@@ -94,92 +122,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private class LocalStorageJavaScriptInterface(c: Context) {
-        private val mContext: Context
-        private val localStorageDBHelper: LocalStorage
-        private lateinit var database: SQLiteDatabase
+    private fun showGallery() {
+        val intent = Intent()
+        intent.type = "image/*"
+        intent.action = Intent.ACTION_PICK
+        startActivityForResult(
+            Intent.createChooser(
+                intent,
+                "Select Image From Gallery"
+            ), ActivityMain.REQUEST_CODE_GALLERY
+        )
+    }
 
-        /**
-         * This method allows to get an item for the given key
-         * @param key : the key to look for in the local storage
-         * @return the item having the given key
-         */
+    internal class JsObject {
         @JavascriptInterface
-        fun getItem(key: String?): String? {
-            var value: String? = null
-            if (key != null) {
-                database = localStorageDBHelper.readableDatabase
-                val cursor: Cursor = database.query(
-                    LocalStorage.LOCALSTORAGE_TABLE_NAME,
-                    null,
-                    LocalStorage.LOCALSTORAGE_ID + " = ?", arrayOf(key), null, null, null
-                )
-                if (cursor.moveToFirst()) {
-                    value = cursor.getString(1)
-                }
-                cursor.close()
-                database.close()
-            }
-            return value
-        }
-
-        /**
-         * set the value for the given key, or create the set of datas if the key does not exist already.
-         * @param key
-         * @param value
-         */
-        @JavascriptInterface
-        fun setItem(key: String?, value: String?) {
-            if (key != null && value != null) {
-                val oldValue = getItem(key)
-                database = localStorageDBHelper.writableDatabase
-                val values = ContentValues()
-                values.put(LocalStorage.LOCALSTORAGE_ID, key)
-                values.put(LocalStorage.LOCALSTORAGE_VALUE, value)
-                if (oldValue != null) {
-                    database.update(
-                        LocalStorage.LOCALSTORAGE_TABLE_NAME,
-                        values,
-                        LocalStorage.LOCALSTORAGE_ID + "='" + key + "'",
-                        null
-                    )
-                } else {
-                    database.insert(LocalStorage.LOCALSTORAGE_TABLE_NAME, null, values)
-                }
-                database.close()
-            }
-        }
-
-        /**
-         * removes the item corresponding to the given key
-         * @param key
-         */
-        @JavascriptInterface
-        fun removeItem(key: String?) {
-            if (key != null) {
-                database = localStorageDBHelper.writableDatabase
-                database.delete(
-                    LocalStorage.LOCALSTORAGE_TABLE_NAME,
-                    LocalStorage.LOCALSTORAGE_ID + "='" + key + "'",
-                    null
-                )
-                database.close()
-            }
-        }
-
-        /**
-         * clears all the local storage.
-         */
-        @JavascriptInterface
-        fun clear() {
-            database = localStorageDBHelper.writableDatabase
-            database.delete(LocalStorage.LOCALSTORAGE_TABLE_NAME, null, null)
-            database.close()
-        }
-
-        init {
-            mContext = c
-            localStorageDBHelper = LocalStorage.getInstance(mContext)
+        fun postMessage(json: String?, transferList: String?): Boolean {
+            Log.d(TAG, "JsObject - $json")
+            return false // here we return true if we handled the post.
         }
     }
 }
