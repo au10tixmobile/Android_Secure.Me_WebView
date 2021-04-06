@@ -11,6 +11,7 @@ import android.util.Log
 import android.webkit.*
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
 
 
@@ -19,7 +20,9 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val TAG = "SecureMe"
-        const val MY_CAMERA_REQUEST_CODE = 100
+        const val CAMERA_REQUEST_CODE = 100
+        const val REQUEST_CODE_GALLERY = 4
+        const val JS_INTERFACE_NAME = "webview"
     }
 
     private var fileUriCallback: ValueCallback<Array<Uri>>? = null
@@ -36,7 +39,7 @@ class MainActivity : AppCompatActivity() {
                 arrayOf(
                     Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.READ_EXTERNAL_STORAGE
-                ), MY_CAMERA_REQUEST_CODE
+                ), CAMERA_REQUEST_CODE
             )
         } else {
             setupWebView(intent?.data)
@@ -45,14 +48,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         super.onActivityResult(requestCode, resultCode, intent)
-        Log.d(TAG, "onActivityResult")
         when (requestCode) {
-            ActivityMain.REQUEST_CODE_GALLERY -> fileUriCallback = if (resultCode == RESULT_OK) {
+            REQUEST_CODE_GALLERY -> fileUriCallback = if (resultCode == RESULT_OK) {
                 val selectedImageUri = intent!!.data!!
                 val localIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, selectedImageUri)
                 this.sendBroadcast(localIntent)
-                // If we want to downsize check out the post
-                //  http://stackoverflow.com/questions/2507898/how-to-pick-an-image-from-gallery-sd-card-for-my-app
                 fileUriCallback!!.onReceiveValue(arrayOf(selectedImageUri))
                 null
             } else {
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == MY_CAMERA_REQUEST_CODE) {
+        if (requestCode == CAMERA_REQUEST_CODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "camera permission granted", Toast.LENGTH_LONG).show()
                 setupWebView(intent?.data)
@@ -84,21 +84,14 @@ class MainActivity : AppCompatActivity() {
             settings.javaScriptEnabled = true
             settings.javaScriptCanOpenWindowsAutomatically = true
             settings.mediaPlaybackRequiresUserGesture = false
-            //those two lines seem necessary to keep data that were stored even if the app was killed.
-            addJavascriptInterface(JsObject(), "JsObject")
+            addJavascriptInterface(JsObject(this@MainActivity), JS_INTERFACE_NAME)
             webViewClient = WebViewClient()
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest) {
                     Log.d(TAG, "onPermissionRequest")
                     runOnUiThread {
-                        Log.d(TAG, request.origin.toString())
-//                        if (request.origin.toString() == "https://secure-me") {
-                        Log.d(TAG, "GRANTED")
+                        Log.d(TAG, "PERMISSION GRANTED")
                         request.grant(request.resources)
-//                        } else {
-//                            Log.d(TAG, "DENIED")
-//                            request.deny()
-//                        }
                     }
                 }
 
@@ -114,9 +107,9 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 //Hides the default camera poster
-                override fun getDefaultVideoPoster(): Bitmap? {
+/*                override fun getDefaultVideoPoster(): Bitmap? {
                     return Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
-                }
+                }*/
             }
             loadUrl(data.toString())
         }
@@ -127,17 +120,20 @@ class MainActivity : AppCompatActivity() {
         intent.type = "image/*"
         intent.action = Intent.ACTION_PICK
         startActivityForResult(
-            Intent.createChooser(
-                intent,
-                "Select Image From Gallery"
-            ), ActivityMain.REQUEST_CODE_GALLERY
+            Intent.createChooser(intent, "Select Image From Gallery"), REQUEST_CODE_GALLERY
         )
     }
 
-    internal class JsObject {
+    internal class JsObject(private val activity: MainActivity) {
         @JavascriptInterface
-        fun postMessage(json: String?, transferList: String?): Boolean {
-            Log.d(TAG, "JsObject - $json")
+        fun postMessage(json: String?, origin: String?): Boolean {
+            if (json != null) {
+                Log.d(TAG, "JsObject - $json")
+                val eventObj = Gson().fromJson(json, JSObjectEvent::class.java)
+                if (eventObj.eventType == "Success") {
+                    Toast.makeText(activity, "PostMessage - Success", Toast.LENGTH_LONG).show()
+                }
+            }
             return false // here we return true if we handled the post.
         }
     }
