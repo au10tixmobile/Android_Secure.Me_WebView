@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -85,7 +84,6 @@ class MainActivity : AppCompatActivity() {
             settings.javaScriptCanOpenWindowsAutomatically = true
             settings.mediaPlaybackRequiresUserGesture = false
             addJavascriptInterface(JsObject(this@MainActivity), JS_INTERFACE_NAME)
-            webViewClient = WebViewClient()
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest) {
                     Log.d(TAG, "onPermissionRequest")
@@ -105,11 +103,6 @@ class MainActivity : AppCompatActivity() {
                     showGallery()
                     return true
                 }
-
-                //Hides the default camera poster
-/*                override fun getDefaultVideoPoster(): Bitmap? {
-                    return Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
-                }*/
             }
             loadUrl(data.toString())
         }
@@ -129,7 +122,7 @@ class MainActivity : AppCompatActivity() {
         fun postMessage(json: String?, origin: String?): Boolean {
             if (json != null) {
                 Log.d(TAG, "JsObject - $json")
-                val eventObj = Gson().fromJson(json, JSObjectEvent::class.java)
+                val eventObj = Gson().fromJson(json, JSEventObj::class.java)
                 if (eventObj.eventType == "Success") {
                     Toast.makeText(activity, "PostMessage - Success", Toast.LENGTH_LONG).show()
                 }

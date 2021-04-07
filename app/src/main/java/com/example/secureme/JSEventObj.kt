@@ -1,7 +1,7 @@
 package com.example.secureme
 import com.google.gson.annotations.SerializedName
 
-data class JSObjectEvent(
+data class JSEventObj(
     @SerializedName("authorizationToken")
     val authorizationToken: String,
     @SerializedName("customerInternalReference")
