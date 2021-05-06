@@ -84,6 +84,13 @@ class MainActivity : AppCompatActivity() {
             settings.javaScriptCanOpenWindowsAutomatically = true
             settings.mediaPlaybackRequiresUserGesture = false
             addJavascriptInterface(JsObject(this@MainActivity), JS_INTERFACE_NAME)
+            addJavascriptInterface(
+                LocalStorageJavaScriptInterface(applicationContext), "LocalStorage"
+            )
+            settings.domStorageEnabled = true
+            settings.databaseEnabled = true
+            settings.databasePath = filesDir.parentFile.path + "/databases/"
+
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest) {
                     Log.d(TAG, "onPermissionRequest")
