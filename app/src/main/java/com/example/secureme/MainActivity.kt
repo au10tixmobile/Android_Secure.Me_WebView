@@ -111,6 +111,13 @@ class MainActivity : AppCompatActivity() {
                     return true
                 }
             }
+            webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                    Log.d(TAG,"shouldOverrideUrlLoading")
+                    view!!.loadUrl(url)
+                    return true
+                }
+            }
             loadUrl(data.toString())
         }
     }
