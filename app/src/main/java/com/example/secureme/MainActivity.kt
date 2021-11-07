@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.util.Log
 import android.webkit.*
 import android.widget.Toast
@@ -41,8 +42,20 @@ class MainActivity : AppCompatActivity() {
                 ), CAMERA_REQUEST_CODE
             )
         } else {
-            setupWebView(intent?.data)
+            if (savedInstanceState == null) {
+                setupWebView(intent?.data)
+            }
         }
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        webview.restoreState(savedInstanceState)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
+        super.onSaveInstanceState(outState, outPersistentState)
+        webview.saveState(outState)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
@@ -113,7 +126,7 @@ class MainActivity : AppCompatActivity() {
             }
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                    Log.d(TAG,"shouldOverrideUrlLoading")
+                    Log.d(TAG, "shouldOverrideUrlLoading")
                     view!!.loadUrl(url)
                     return true
                 }
