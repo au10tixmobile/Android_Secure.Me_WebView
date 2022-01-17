@@ -33,6 +33,8 @@ class MainActivity : AppCompatActivity() {
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M && checkSelfPermission(
                 Manifest.permission.CAMERA
+            ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+                Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             requestPermissions(
@@ -96,6 +98,7 @@ class MainActivity : AppCompatActivity() {
             settings.javaScriptEnabled = true
             settings.javaScriptCanOpenWindowsAutomatically = true
             settings.mediaPlaybackRequiresUserGesture = false
+            settings.setGeolocationDatabasePath(context.filesDir.path)
             addJavascriptInterface(JsObject(this@MainActivity), JS_INTERFACE_NAME)
             addJavascriptInterface(
                 LocalStorageJavaScriptInterface(applicationContext), "LocalStorage"
@@ -111,6 +114,13 @@ class MainActivity : AppCompatActivity() {
                         Log.d(TAG, "PERMISSION GRANTED")
                         request.grant(request.resources)
                     }
+                }
+
+                override fun onGeolocationPermissionsShowPrompt(
+                    origin: String?,
+                    callback: GeolocationPermissions.Callback?
+                ) {
+                    callback?.invoke(origin, true, false)
                 }
 
                 override fun onShowFileChooser(
