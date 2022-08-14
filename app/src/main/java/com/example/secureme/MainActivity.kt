@@ -100,12 +100,6 @@ class MainActivity : AppCompatActivity() {
             settings.mediaPlaybackRequiresUserGesture = false
             settings.setGeolocationDatabasePath(context.filesDir.path)
             addJavascriptInterface(JsObject(this@MainActivity), JS_INTERFACE_NAME)
-            addJavascriptInterface(
-                LocalStorageJavaScriptInterface(applicationContext), "LocalStorage"
-            )
-            settings.domStorageEnabled = true
-            settings.databaseEnabled = true
-            settings.databasePath = filesDir.parentFile.path + "/databases/"
 
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest) {
