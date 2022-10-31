@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.secureme">
 
     <uses-permission android:name="android.permission.CAMERA" />
@@ -17,23 +18,34 @@
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+            <intent-filter android:autoVerify="true" tools:targetApi="m">
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="secure-me.au10tixservicesqa.com"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    android:host="secure-me.au10tixservicesqa.com" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true" tools:targetApi="m">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
                 <data
-                    android:host="secure-me.au10tixservicesdev.com"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    android:host="secure-me.au10tixservicesdev.com" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true" tools:targetApi="m">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
                 <data
-                    android:host="secure-me.au10tixservicesstaging.com"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    android:host="secure-me.au10tixservicesstaging.com" />
             </intent-filter>
         </activity>
     </application>
