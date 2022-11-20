@@ -4,9 +4,7 @@ import android.content.Context
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
-import android.media.AudioManager
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONArray
@@ -14,14 +12,21 @@ import org.json.JSONException
 import org.json.JSONObject
 
 object CameraEnumerationHelper {
+
+    val FRONT_CAM = "Front Camera"
+    val BACK_CAM = "Back Camera"
+    val EXTERNAL_CAM = "External Camera"
+    val UNKNOWN_CAM = "Unknown Camera"
+    var devicesArray: JSONArray? = null
+
     fun enumerateDevices(context: Context): JSONArray {
         this.devicesArray = JSONArray()
-        getCams(context)
+        getCameras(context)
         return devicesArray as JSONArray;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private fun getCams(context: Context) {
+    private fun getCameras(context: Context) {
         // Video inputs
         val camera = context.getSystemService(AppCompatActivity.CAMERA_SERVICE) as CameraManager
         try {
@@ -44,14 +49,6 @@ object CameraEnumerationHelper {
             println("ERROR IOException $e")
         }
     }
-
-
-    val FRONT_CAM = "Front Camera"
-    val BACK_CAM = "Back Camera"
-    val EXTERNAL_CAM = "External Camera"
-    val UNKNOWN_CAM = "Unknown Camera"
-
-    var devicesArray: JSONArray? = null
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private fun getVideoType(input: CameraCharacteristics): String? {
