@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
+import org.json.JSONArray
 
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -31,7 +32,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(
                 Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
@@ -94,13 +94,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupWebView(data: Uri?) {
+        val enumerationResult = CameraEnumerationHelper.enumerateDevices(context = this)
         WebView.setWebContentsDebuggingEnabled(true)
         webview.apply {
             settings.javaScriptEnabled = true
             settings.javaScriptCanOpenWindowsAutomatically = true
             settings.mediaPlaybackRequiresUserGesture = false
+            settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK;
             settings.setGeolocationDatabasePath(context.filesDir.path)
-            addJavascriptInterface(JsObject(this@MainActivity), JS_INTERFACE_NAME)
+            addJavascriptInterface(
+                JsObject(this@MainActivity, enumerationResult),
+                JS_INTERFACE_NAME
+            )
 
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest) {
@@ -149,7 +154,13 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    internal class JsObject(private val activity: MainActivity) {
+    internal class JsObject(private val activity: MainActivity, private val deviceList: JSONArray) {
+
+        @JavascriptInterface
+        fun enumerateDevices(): String {
+            return deviceList.toString()
+        }
+
         @JavascriptInterface
         fun postMessage(json: String?, origin: String?): Boolean {
             if (json != null) {
