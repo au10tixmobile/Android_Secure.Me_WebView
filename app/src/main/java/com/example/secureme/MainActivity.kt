@@ -100,7 +100,8 @@ class MainActivity : AppCompatActivity() {
             settings.javaScriptEnabled = true
             settings.javaScriptCanOpenWindowsAutomatically = true
             settings.mediaPlaybackRequiresUserGesture = false
-            settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK;
+            settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+            settings.domStorageEnabled = true
             settings.setGeolocationDatabasePath(context.filesDir.path)
             addJavascriptInterface(
                 JsObject(this@MainActivity, enumerationResult),
@@ -147,7 +148,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showGallery() {
         val intent = Intent()
-        intent.type = "image/*"
+        intent.type = "*/*"
         intent.action = Intent.ACTION_PICK
         startActivityForResult(
             Intent.createChooser(intent, "Select Image From Gallery"), REQUEST_CODE_GALLERY
