@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                     Log.d(TAG, "shouldOverrideUrlLoading")
-                    view!!.loadUrl(url)
+                    view!!.loadUrl(url!!)
                     return true
                 }
             }
@@ -149,7 +149,7 @@ class MainActivity : AppCompatActivity() {
     private fun showGallery() {
         val intent = Intent()
         intent.type = "*/*"
-        intent.action = Intent.ACTION_PICK
+        intent.action = Intent.ACTION_GET_CONTENT
         startActivityForResult(
             Intent.createChooser(intent, "Select Image From Gallery"), REQUEST_CODE_GALLERY
         )
