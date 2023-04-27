@@ -100,7 +100,7 @@ class MainActivity : AppCompatActivity() {
             settings.javaScriptEnabled = true
             settings.javaScriptCanOpenWindowsAutomatically = true
             settings.mediaPlaybackRequiresUserGesture = false
-            settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+            settings.cacheMode = WebSettings.LOAD_NO_CACHE
             settings.domStorageEnabled = true
             settings.setGeolocationDatabasePath(context.filesDir.path)
             addJavascriptInterface(
