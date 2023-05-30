@@ -100,13 +100,18 @@ class MainActivity : AppCompatActivity() {
             settings.javaScriptEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
             settings.cacheMode = WebSettings.LOAD_NO_CACHE
-            settings.domStorageEnabled = true
             settings.setGeolocationDatabasePath(context.filesDir.path)
             addJavascriptInterface(
                 JsObject(this@MainActivity),
                 JS_INTERFACE_NAME
             )
-
+            //For Smartlook
+            settings.domStorageEnabled = true
+            settings.databaseEnabled = true
+            settings.databasePath = filesDir.parentFile.path + "/databases/"
+            addJavascriptInterface(
+                LocalStorageJavaScriptInterface(applicationContext), "LocalStorage"
+            )
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest) {
                     Log.d(TAG, "onPermissionRequest")
