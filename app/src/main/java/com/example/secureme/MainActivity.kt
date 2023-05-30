@@ -14,7 +14,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
-import org.json.JSONArray
 
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -96,17 +95,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupWebView(data: Uri?) {
-        val enumerationResult = CameraEnumerationHelper.enumerateDevices(context = this)
         WebView.setWebContentsDebuggingEnabled(true)
         webview.apply {
             settings.javaScriptEnabled = true
-            settings.javaScriptCanOpenWindowsAutomatically = true
             settings.mediaPlaybackRequiresUserGesture = false
             settings.cacheMode = WebSettings.LOAD_NO_CACHE
             settings.domStorageEnabled = true
             settings.setGeolocationDatabasePath(context.filesDir.path)
             addJavascriptInterface(
-                JsObject(this@MainActivity, enumerationResult),
+                JsObject(this@MainActivity),
                 JS_INTERFACE_NAME
             )
 
@@ -157,12 +154,7 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    internal class JsObject(private val activity: MainActivity, private val deviceList: JSONArray) {
-
-        @JavascriptInterface
-        fun enumerateDevices(): String {
-            return deviceList.toString()
-        }
+    internal class JsObject(private val activity: MainActivity) {
 
         @JavascriptInterface
         fun postMessage(json: String?, origin: String?): Boolean {
