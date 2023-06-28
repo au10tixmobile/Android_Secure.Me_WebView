@@ -9,7 +9,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.util.Log
+import android.view.inputmethod.InputMethodManager
 import android.webkit.*
+import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
@@ -27,10 +30,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var fileUriCallback: ValueCallback<Array<Uri>>? = null
+    private var url: String = ""
+    private lateinit var urlAddress: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        urlAddress = findViewById(R.id.url)
+        urlAddress.setOnEditorActionListener { v, actionId, event ->
+            url = urlAddress.text.toString()
+            webview.loadUrl(url)
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(v.windowToken, 0)
+            true
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(
                 Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
@@ -47,7 +60,9 @@ class MainActivity : AppCompatActivity() {
             )
         } else {
             if (savedInstanceState == null) {
-                setupWebView(intent?.data)
+                url = intent?.data?.toString() ?: ""
+                urlAddress.setText(url, TextView.BufferType.EDITABLE)
+                setupWebView()
             }
         }
     }
@@ -90,11 +105,11 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "camera permission denied", Toast.LENGTH_LONG).show()
             }
-            setupWebView(intent?.data)
+            setupWebView()
         }
     }
 
-    private fun setupWebView(data: Uri?) {
+    private fun setupWebView() {
         WebView.setWebContentsDebuggingEnabled(true)
         webview.apply {
             settings.javaScriptEnabled = true
@@ -140,13 +155,19 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             webViewClient = object : WebViewClient() {
+
                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                     Log.d(TAG, "shouldOverrideUrlLoading")
-                    view!!.loadUrl(url!!)
+                    if (url == null) {
+                        return false
+                    }
+                    this@MainActivity.url = url
+                    view!!.loadUrl(url)
+                    urlAddress.setText(url, TextView.BufferType.EDITABLE)
                     return true
                 }
             }
-            loadUrl(data.toString())
+            loadUrl(this@MainActivity.url)
         }
     }
 
