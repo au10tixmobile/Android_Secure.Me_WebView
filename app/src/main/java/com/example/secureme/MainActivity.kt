@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
             imm.hideSoftInputFromWindow(v.windowToken, 0)
             true
         }
+        url = intent?.data?.toString() ?: ""
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(
                 Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
@@ -60,7 +61,6 @@ class MainActivity : AppCompatActivity() {
             )
         } else {
             if (savedInstanceState == null) {
-                url = intent?.data?.toString() ?: ""
                 urlAddress.setText(url, TextView.BufferType.EDITABLE)
                 setupWebView()
             }
